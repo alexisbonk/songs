@@ -20,7 +20,8 @@ local SONG_LIST_URL = "https://api.github.com/repos/alexisbonk/songs/contents/"
 
 local songs = {}
 local currentIndex = 1
-local isPlaying = true
+local isPlaying = false
+local audioBuffer = nil
 
 local function fetch_song_list()
     local response = http.get(SONG_LIST_URL)
@@ -87,6 +88,7 @@ local function play_song(index)
     for i = 1, #data, 16 * 64 do
         if not isPlaying then return end
         local buffer = decoder(data:sub(i, i + 16 * 64 - 1))
+        audioBuffer = buffer
         while not speaker.playAudio(buffer) do
             os.pullEvent("speaker_audio_empty")
             os.pullEvent()
@@ -119,6 +121,9 @@ local function handle_buttons()
             play_song(math.min(#songs, currentIndex + 1))
         elseif x >= 3 and x <= 9 and y == 9 then
             isPlaying = false
+            if audioBuffer then
+                speaker.stopAudio()
+            end
         elseif x >= 12 and x <= 18 and y == 9 then
             isPlaying = true
             play_song(currentIndex)
