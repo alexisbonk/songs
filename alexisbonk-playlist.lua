@@ -23,13 +23,8 @@ local currentIndex = 1
 local isPlaying = true
 
 local function fetch_song_list()
-    print("Fetching song list...")
     local response = http.get(SONG_LIST_URL)
-    if not response then
-        print("Unable to fetch file list.")
-        return
-    end
-
+    if not response then return end
     local data = textutils.unserializeJSON(response.readAll())
     response.close()
 
@@ -37,12 +32,6 @@ local function fetch_song_list()
         if file.name:match("%.dfpwm$") then
             table.insert(songs, GITHUB_RAW_URL .. file.name)
         end
-    end
-
-    if #songs == 0 then
-        print("No songs found in the GitHub repository.")
-    else
-        print("Songs fetched:", #songs)
     end
 end
 
@@ -65,11 +54,11 @@ local function draw_buttons()
     monitor.setBackgroundColor(colors.lightGray)
     monitor.setTextColor(colors.black)
     monitor.setCursorPos(3, 9)
-    monitor.write("Stop")
+    monitor.write("Pause")
     monitor.setBackgroundColor(colors.red)
     monitor.setTextColor(colors.white)
     monitor.setCursorPos(12, 9)
-    monitor.write("Replay")
+    monitor.write("Play")
 
     monitor.setBackgroundColor(colors.black)
     monitor.setTextColor(colors.white)
@@ -82,22 +71,14 @@ local function update_song_display(songName)
 end
 
 local function play_song(index)
-    if index < 1 or index > #songs then
-        print("Invalid song index.")
-        return
-    end
+    if index < 1 or index > #songs then return end
     currentIndex = index
     local url = songs[index]
-
     local songName = url:match(".*/(.*)")
-    print("Playing:", songName)
     update_song_display(songName)
 
     local response = http.get(url, nil, true)
-    if not response then
-        print("Unable to fetch song:", url)
-        return
-    end
+    if not response then return end
 
     local decoder = dfpwm.make_decoder()
     local data = response.readAll()
@@ -105,10 +86,10 @@ local function play_song(index)
 
     for i = 1, #data, 16 * 64 do
         if not isPlaying then return end
-
         local buffer = decoder(data:sub(i, i + 16 * 64 - 1))
         while not speaker.playAudio(buffer) do
             os.pullEvent("speaker_audio_empty")
+            os.pullEvent()
         end
     end
 end
@@ -116,7 +97,6 @@ end
 local function play_shuffle()
     fetch_song_list()
     if #songs == 0 then return end
-
     shuffle(songs)
     while true do
         if isPlaying then
@@ -124,22 +104,28 @@ local function play_shuffle()
             currentIndex = currentIndex + 1
             if currentIndex > #songs then currentIndex = 1 end
         end
+        os.pullEvent()
     end
 end
 
 local function handle_buttons()
     while true do
         local event, side, x, y = os.pullEvent("monitor_touch")
-
         if x >= 3 and x <= 9 and y == 6 then
-            print("Previous song")
             isPlaying = false
             play_song(math.max(1, currentIndex - 1))
         elseif x >= 12 and x <= 18 and y == 6 then
-            print("Next song")
             isPlaying = false
             play_song(math.min(#songs, currentIndex + 1))
         elseif x >= 3 and x <= 9 and y == 9 then
-            print("Stop playing")
             isPlaying = false
-        elseif x >= 12 and x
+        elseif x >= 12 and x <= 18 and y == 9 then
+            isPlaying = true
+            play_song(currentIndex)
+        end
+    end
+end
+
+monitor.clear()
+draw_buttons()
+parallel.waitForAny(play_shuffle, handle_buttons)
