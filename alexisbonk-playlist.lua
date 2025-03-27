@@ -24,8 +24,7 @@ local isPlaying = false
 local isPaused = false
 local audioBuffer = nil
 
-local VERSION = "v1.2"  -- Change the version number as needed
-
+local VERSION = "v1.2"
 local function fetch_song_list()
     local response = http.get(SONG_LIST_URL)
     if not response then return end
