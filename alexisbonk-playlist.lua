@@ -21,7 +21,10 @@ local SONG_LIST_URL = "https://api.github.com/repos/alexisbonk/songs/contents/"
 local songs = {}
 local currentIndex = 1
 local isPlaying = false
+local isPaused = false
 local audioBuffer = nil
+
+local VERSION = "v1.1"  -- Change the version number as needed
 
 local function fetch_song_list()
     local response = http.get(SONG_LIST_URL)
@@ -86,12 +89,12 @@ local function play_song(index)
     response.close()
 
     for i = 1, #data, 16 * 64 do
+        if isPaused then return end
         if not isPlaying then return end
         local buffer = decoder(data:sub(i, i + 16 * 64 - 1))
         audioBuffer = buffer
         while not speaker.playAudio(buffer) do
             os.pullEvent("speaker_audio_empty")
-            os.pullEvent()
         end
     end
 end
@@ -120,17 +123,28 @@ local function handle_buttons()
             isPlaying = false
             play_song(math.min(#songs, currentIndex + 1))
         elseif x >= 3 and x <= 9 and y == 9 then
+            isPaused = true
             isPlaying = false
             if audioBuffer then
                 speaker.stopAudio()
             end
         elseif x >= 12 and x <= 18 and y == 9 then
+            isPaused = false
             isPlaying = true
             play_song(currentIndex)
         end
     end
 end
 
+local function draw_version()
+    monitor.setCursorPos(1, monitor.getSize())
+    monitor.clearLine()
+    monitor.setBackgroundColor(colors.black)
+    monitor.setTextColor(colors.white)
+    monitor.write("Version: " .. VERSION)
+end
+
 monitor.clear()
 draw_buttons()
+draw_version()
 parallel.waitForAny(play_shuffle, handle_buttons)
