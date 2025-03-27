@@ -24,7 +24,8 @@ local isPlaying = false
 local isPaused = false
 local audioBuffer = nil
 
-local VERSION = "v1.2"
+local VERSION = "v1.3"
+
 local function fetch_song_list()
     local response = http.get(SONG_LIST_URL)
     if not response then return end
@@ -65,6 +66,23 @@ local function draw_buttons()
 
     monitor.setBackgroundColor(colors.black)
     monitor.setTextColor(colors.white)
+end
+
+local function draw_songs()
+    monitor.setBackgroundColor(colors.black)
+    monitor.setTextColor(colors.white)
+    for i, song in ipairs(songs) do
+        monitor.setCursorPos(2, i + 2)
+        if i == currentIndex then
+            monitor.setBackgroundColor(colors.white)
+            monitor.setTextColor(colors.black)
+        else
+            monitor.setBackgroundColor(colors.black)
+            monitor.setTextColor(colors.white)
+        end
+        local songName = song:match(".*/(.*)")
+        monitor.write(songName)
+    end
 end
 
 local function update_song_display(songName)
@@ -131,12 +149,20 @@ local function handle_buttons()
             isPaused = false
             isPlaying = true
             play_song(currentIndex)
+        else
+            for i = 1, #songs do
+                if y == i + 2 and x >= 2 and x <= 18 then
+                    isPlaying = true
+                    play_song(i)
+                    return
+                end
+            end
         end
     end
 end
 
 local function draw_version()
-    monitor.setCursorPos(1, monitor.getSize())
+    monitor.setCursorPos(1, 15)  -- Position deux lignes après les boutons
     monitor.clearLine()
     monitor.setBackgroundColor(colors.black)
     monitor.setTextColor(colors.white)
@@ -144,5 +170,8 @@ local function draw_version()
 end
 
 monitor.clear()
+fetch_song_list()
 draw_buttons()
+draw_songs()
+draw_version()
 parallel.waitForAny(play_shuffle, handle_buttons)
