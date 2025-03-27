@@ -3,16 +3,16 @@ local speaker = peripheral.find("speaker")
 local monitor = peripheral.find("monitor")
 
 if not speaker then
-    print("Aucun haut-parleur trouvé !")
+    print("No speaker found!")
     return
 end
 
 if not monitor then
-    print("Aucun écran trouvé !")
+    print("No monitor found!")
     return
 end
 
-monitor.setTextScale(2) -- Agrandir le texte pour les 4 moniteurs
+monitor.setTextScale(1)
 monitor.clear()
 
 local GITHUB_RAW_URL = "https://github.com/alexisbonk/songs/raw/refs/heads/main/"
@@ -23,10 +23,10 @@ local currentIndex = 1
 local isPlaying = true
 
 local function fetch_song_list()
-    print("Récupération de la liste des chansons...")
+    print("Fetching song list...")
     local response = http.get(SONG_LIST_URL)
     if not response then
-        print("Impossible de récupérer la liste des fichiers.")
+        print("Unable to fetch file list.")
         return
     end
 
@@ -40,9 +40,9 @@ local function fetch_song_list()
     end
 
     if #songs == 0 then
-        print("Aucune chanson trouvée dans le dépôt GitHub.")
+        print("No songs found in the GitHub repository.")
     else
-        print("Chansons récupérées :", #songs)
+        print("Songs fetched:", #songs)
     end
 end
 
@@ -53,28 +53,44 @@ local function shuffle(tbl)
     end
 end
 
+local function draw_buttons()
+    monitor.setCursorPos(3, 6)
+    monitor.write("Prev")
+    monitor.setCursorPos(12, 6)
+    monitor.write("Next")
+    monitor.setCursorPos(3, 9)
+    monitor.write("Stop")
+    monitor.setCursorPos(12, 9)
+    monitor.write("Replay")
+end
+
+local function update_song_display(songName)
+    monitor.setCursorPos(2, 2)
+    monitor.clearLine()
+    monitor.write("Now Playing: " .. songName)
+end
+
 local function play_song(index)
     if index < 1 or index > #songs then
-        print("Index de chanson invalide.")
+        print("Invalid song index.")
         return
     end
     currentIndex = index
     local url = songs[index]
 
-    print("Lecture de :", url:match(".*/(.*)"))
+    local songName = url:match(".*/(.*)")
+    print("Playing:", songName)
+    update_song_display(songName)
+
     local response = http.get(url, nil, true)
     if not response then
-        print("Impossible de récupérer la chanson :", url)
+        print("Unable to fetch song:", url)
         return
     end
 
     local decoder = dfpwm.make_decoder()
     local data = response.readAll()
     response.close()
-
-    monitor.clear()
-    monitor.setCursorPos(2, 2)
-    monitor.write("🎵 Lecture : " .. url:match(".*/(.*)"))
 
     for i = 1, #data, 16 * 64 do
         if not isPlaying then return end
@@ -105,35 +121,24 @@ local function handle_buttons()
         local event, side, x, y = os.pullEvent("monitor_touch")
 
         if x >= 3 and x <= 9 and y == 6 then
-            print("⏮️ Chanson précédente")
+            print("Previous song")
             isPlaying = false
             play_song(math.max(1, currentIndex - 1))
         elseif x >= 12 and x <= 18 and y == 6 then
-            print("⏭️ Chanson suivante")
+            print("Next song")
             isPlaying = false
             play_song(math.min(#songs, currentIndex + 1))
         elseif x >= 3 and x <= 9 and y == 9 then
-            print("⏹️ Arrêt de la lecture")
+            print("Stop playing")
             isPlaying = false
         elseif x >= 12 and x <= 18 and y == 9 then
-            print("🔄 Rejouer la chanson")
+            print("Replay song")
             isPlaying = true
             play_song(currentIndex)
         end
     end
 end
 
-local function draw_buttons()
-    monitor.clear()
-    monitor.setCursorPos(3, 6)
-    monitor.write("⏮️ Précédent")
-    monitor.setCursorPos(12, 6)
-    monitor.write("⏭️ Suivant")
-    monitor.setCursorPos(3, 9)
-    monitor.write("⏹️ Stop")
-    monitor.setCursorPos(12, 9)
-    monitor.write("🔄 Rejouer")
-end
-
+monitor.clear()
 draw_buttons()
 parallel.waitForAny(play_shuffle, handle_buttons)
