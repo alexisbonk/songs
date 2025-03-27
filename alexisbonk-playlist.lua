@@ -24,7 +24,7 @@ local isPlaying = false
 local isPaused = false
 local audioBuffer = nil
 
-local VERSION = "v1.1"  -- Change the version number as needed
+local VERSION = "v1.2"  -- Change the version number as needed
 
 local function fetch_song_list()
     local response = http.get(SONG_LIST_URL)
@@ -146,5 +146,4 @@ end
 
 monitor.clear()
 draw_buttons()
-draw_version()
 parallel.waitForAny(play_shuffle, handle_buttons)
