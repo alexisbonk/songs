@@ -54,14 +54,25 @@ local function shuffle(tbl)
 end
 
 local function draw_buttons()
+    monitor.setBackgroundColor(colors.lightGray)
+    monitor.setTextColor(colors.black)
     monitor.setCursorPos(3, 6)
     monitor.write("Prev")
+    monitor.setBackgroundColor(colors.green)
+    monitor.setTextColor(colors.white)
     monitor.setCursorPos(12, 6)
     monitor.write("Next")
+    monitor.setBackgroundColor(colors.lightGray)
+    monitor.setTextColor(colors.black)
     monitor.setCursorPos(3, 9)
     monitor.write("Stop")
+    monitor.setBackgroundColor(colors.red)
+    monitor.setTextColor(colors.white)
     monitor.setCursorPos(12, 9)
     monitor.write("Replay")
+
+    monitor.setBackgroundColor(colors.black)
+    monitor.setTextColor(colors.white)
 end
 
 local function update_song_display(songName)
@@ -131,14 +142,4 @@ local function handle_buttons()
         elseif x >= 3 and x <= 9 and y == 9 then
             print("Stop playing")
             isPlaying = false
-        elseif x >= 12 and x <= 18 and y == 9 then
-            print("Replay song")
-            isPlaying = true
-            play_song(currentIndex)
-        end
-    end
-end
-
-monitor.clear()
-draw_buttons()
-parallel.waitForAny(play_shuffle, handle_buttons)
+        elseif x >= 12 and x
