@@ -2,7 +2,7 @@ local dfpwm = require("cc.audio.dfpwm")
 local speaker = peripheral.find("speaker")
 
 if not speaker then
-    error("Aucun haut-parleur trouvé !")
+    print("Aucun haut-parleur trouvé !")
 end
 
 local GITHUB_RAW_URL = "https://github.com/alexisbonk/songs/raw/refs/heads/main/"
@@ -50,7 +50,7 @@ end
 
 local function play_shuffle()
     local songs = fetch_song_list()
-    if #songs == 0 then error("Aucune chanson trouvée !") end
+    if #songs == 0 then print("Aucune chanson trouvée !") end
 
     while true do
         shuffle(songs)
