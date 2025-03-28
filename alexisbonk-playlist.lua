@@ -49,19 +49,19 @@ end
 local function draw_buttons()
     monitor.setBackgroundColor(colors.lightGray)
     monitor.setTextColor(colors.black)
-    monitor.setCursorPos(3, 4)
+    monitor.setCursorPos(3, 6)
     monitor.write("Prev")
     monitor.setBackgroundColor(colors.green)
     monitor.setTextColor(colors.white)
-    monitor.setCursorPos(12, 4)
+    monitor.setCursorPos(12, 6)
     monitor.write("Next")
     monitor.setBackgroundColor(colors.lightGray)
     monitor.setTextColor(colors.black)
-    monitor.setCursorPos(3, 8)
+    monitor.setCursorPos(3, 10)
     monitor.write("Pause")
     monitor.setBackgroundColor(colors.red)
     monitor.setTextColor(colors.white)
-    monitor.setCursorPos(12, 8)
+    monitor.setCursorPos(12, 10)
     monitor.write("Play")
 
     monitor.setBackgroundColor(colors.black)
@@ -72,7 +72,7 @@ local function draw_songs()
     monitor.setBackgroundColor(colors.black)
     monitor.setTextColor(colors.white)
     for i, song in ipairs(songs) do
-        monitor.setCursorPos(2, i + 12)
+        monitor.setCursorPos(2, i + 14)
         if i == currentIndex then
             monitor.setBackgroundColor(colors.white)
             monitor.setTextColor(colors.black)
@@ -108,15 +108,17 @@ local function play_song(index)
     local data = response.readAll()
     response.close()
 
-    for i = 1, #data, 16 * 64 do
+    local i = 1
+    while i <= #data do
         if isPaused then
-            repeat os.pullEvent("monitor_touch") until not isPaused
+            os.pullEvent("monitor_touch")
         end
         if not isPlaying then return end
         local buffer = decoder(data:sub(i, i + 16 * 64 - 1))
         while not speaker.playAudio(buffer) do
             os.pullEvent("speaker_audio_empty")
         end
+        i = i + 16 * 64
     end
     isPlaying = false
     update_song_display()
@@ -125,23 +127,23 @@ end
 local function handle_buttons()
     while true do
         local event, side, x, y = os.pullEvent("monitor_touch")
-        if x >= 3 and x <= 9 and y == 4 then
+        if x >= 3 and x <= 9 and y == 6 then
             isPlaying = false
             play_song(math.max(1, currentIndex - 1))
             draw_songs()
-        elseif x >= 12 and x <= 18 and y == 4 then
+        elseif x >= 12 and x <= 18 and y == 6 then
             isPlaying = false
             play_song(math.min(#songs, currentIndex + 1))
             draw_songs()
-        elseif x >= 3 and x <= 9 and y == 8 then
+        elseif x >= 3 and x <= 9 and y == 10 then
             isPaused = not isPaused
-        elseif x >= 12 and x <= 18 and y == 8 then
+        elseif x >= 12 and x <= 18 and y == 10 then
             isPaused = false
             isPlaying = true
             play_song(currentIndex)
         else
             for i = 1, #songs do
-                if y == i + 12 and x >= 2 and x <= 18 then
+                if y == i + 14 and x >= 2 and x <= 18 then
                     isPlaying = true
                     play_song(i)
                     return
@@ -152,7 +154,7 @@ local function handle_buttons()
 end
 
 local function draw_version()
-    monitor.setCursorPos(1, 20)
+    monitor.setCursorPos(1, 24)
     monitor.clearLine()
     monitor.setBackgroundColor(colors.black)
     monitor.setTextColor(colors.white)
