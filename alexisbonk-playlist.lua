@@ -24,7 +24,7 @@ local isPlaying = false
 local isPaused = false
 local audioBuffer = nil
 
-local VERSION = "v1.6"
+local VERSION = "v1.7"
 
 local function fetch_song_list()
     local response = http.get(SONG_LIST_URL)
@@ -34,6 +34,7 @@ local function fetch_song_list()
 
     for _, file in pairs(data) do
         if file.name:match("%.dfpwm$") then
+            local songName = file.name:gsub("_", " "):gsub(".dfpwm", "")
             table.insert(songs, GITHUB_RAW_URL .. file.name)
         end
     end
@@ -59,6 +60,7 @@ local function draw_songs()
             monitor.setTextColor(colors.white)
         end
         local songName = song:match(".*/(.*)")
+        songName = songName:gsub("_", " "):gsub(".dfpwm", "")
         monitor.write(songName)
     end
 end
@@ -90,6 +92,7 @@ local function update_song_display()
     monitor.clearLine()
     if isPlaying then
         local songName = songs[currentIndex]:match(".*/(.*)")
+        songName = songName:gsub("_", " "):gsub(".dfpwm", "")
         monitor.write("Now Playing: " .. songName)
     end
 end
@@ -131,17 +134,13 @@ local function handle_buttons()
             if currentIndex > 1 then
                 currentIndex = currentIndex - 1
                 update_song_display()
-                if isPlaying then
-                    play_song(currentIndex)
-                end
+                draw_songs()
             end
         elseif x >= 12 and x <= 18 and y == 14 then  -- Next button
             if currentIndex < #songs then
                 currentIndex = currentIndex + 1
                 update_song_display()
-                if isPlaying then
-                    play_song(currentIndex)
-                end
+                draw_songs()
             end
         elseif x >= 3 and x <= 9 and y == 18 then  -- Pause button
             isPaused = true
@@ -165,7 +164,7 @@ local function handle_buttons()
 end
 
 local function draw_version()
-    monitor.setCursorPos(1, 22)
+    monitor.setCursorPos(1, 23)
     monitor.clearLine()
     monitor.setBackgroundColor(colors.black)
     monitor.setTextColor(colors.white)
