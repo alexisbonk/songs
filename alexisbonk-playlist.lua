@@ -24,7 +24,7 @@ local isPlaying = false
 local isPaused = false
 local audioBuffer = nil
 
-local VERSION = "v1.3"
+local VERSION = "v1.4"
 
 local function fetch_song_list()
     local response = http.get(SONG_LIST_URL)
@@ -72,7 +72,7 @@ local function draw_songs()
     monitor.setBackgroundColor(colors.black)
     monitor.setTextColor(colors.white)
     for i, song in ipairs(songs) do
-        monitor.setCursorPos(2, i + 2)
+        monitor.setCursorPos(2, i + 10)
         if i == currentIndex then
             monitor.setBackgroundColor(colors.white)
             monitor.setTextColor(colors.black)
@@ -136,9 +136,11 @@ local function handle_buttons()
         if x >= 3 and x <= 9 and y == 6 then
             isPlaying = false
             play_song(math.max(1, currentIndex - 1))
+            draw_songs()
         elseif x >= 12 and x <= 18 and y == 6 then
             isPlaying = false
             play_song(math.min(#songs, currentIndex + 1))
+            draw_songs()
         elseif x >= 3 and x <= 9 and y == 9 then
             isPaused = true
             isPlaying = false
@@ -151,7 +153,7 @@ local function handle_buttons()
             play_song(currentIndex)
         else
             for i = 1, #songs do
-                if y == i + 2 and x >= 2 and x <= 18 then
+                if y == i + 10 and x >= 2 and x <= 18 then
                     isPlaying = true
                     play_song(i)
                     return
@@ -162,7 +164,7 @@ local function handle_buttons()
 end
 
 local function draw_version()
-    monitor.setCursorPos(1, 15)  -- Position deux lignes après les boutons
+    monitor.setCursorPos(1, 18)  -- Position encore plus bas que les boutons
     monitor.clearLine()
     monitor.setBackgroundColor(colors.black)
     monitor.setTextColor(colors.white)
