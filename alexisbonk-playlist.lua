@@ -24,7 +24,7 @@ local isPlaying = false
 local isPaused = false
 local audioBuffer = nil
 
-local VERSION = "v1.6"
+local VERSION = "v1.7"
 
 local function fetch_song_list()
     local response = http.get(SONG_LIST_URL)
@@ -43,7 +43,7 @@ local function draw_songs()
     monitor.setBackgroundColor(colors.black)
     monitor.setTextColor(colors.white)
     for i, song in ipairs(songs) do
-        monitor.setCursorPos(2, i + 4)
+        monitor.setCursorPos(2, i + 8)
         if i == currentIndex then
             monitor.setBackgroundColor(colors.white)
             monitor.setTextColor(colors.black)
@@ -57,22 +57,22 @@ local function draw_songs()
 end
 
 local function draw_buttons()
-    monitor.setBackgroundColor(colors.lightGray)
-    monitor.setTextColor(colors.black)
-    monitor.setCursorPos(3, 16)
-    monitor.write("Prev")
-    monitor.setBackgroundColor(colors.green)
-    monitor.setTextColor(colors.white)
-    monitor.setCursorPos(12, 16)
-    monitor.write("Next")
-    monitor.setBackgroundColor(colors.lightGray)
-    monitor.setTextColor(colors.black)
-    monitor.setCursorPos(3, 20)
-    monitor.write("Pause")
-    monitor.setBackgroundColor(colors.red)
-    monitor.setTextColor(colors.white)
-    monitor.setCursorPos(12, 20)
-    monitor.write("Play")
+    local function draw_button(x, y, width, height, text, bgColor, textColor)
+        monitor.setBackgroundColor(bgColor)
+        monitor.setTextColor(textColor)
+        for i = 0, height - 1 do
+            monitor.setCursorPos(x, y + i)
+            monitor.write(string.rep(" ", width))
+        end
+        monitor.setCursorPos(x + (width - #text) // 2, y + height // 2)
+        monitor.write(text)
+    end
+    
+    draw_button(3, 4, 7, 3, "Prev", colors.lightGray, colors.black)
+    draw_button(12, 4, 7, 3, "Next", colors.green, colors.white)
+    draw_button(3, 10, 7, 3, "Pause", colors.lightGray, colors.black)
+    draw_button(12, 10, 7, 3, "Play", colors.red, colors.white)
+    
     monitor.setBackgroundColor(colors.black)
     monitor.setTextColor(colors.white)
 end
@@ -89,7 +89,6 @@ end
 local function play_song(index)
     if index < 1 or index > #songs then return end
     currentIndex = index
-    isPlaying = true
     update_song_display()
 
     local url = songs[index]
@@ -100,6 +99,7 @@ local function play_song(index)
     local data = response.readAll()
     response.close()
 
+    isPlaying = true
     local i = 1
     while i <= #data do
         if isPaused then
@@ -119,23 +119,26 @@ end
 local function handle_buttons()
     while true do
         local event, side, x, y = os.pullEvent("monitor_touch")
-        if x >= 3 and x <= 9 and y == 16 then
+        if x >= 3 and x <= 9 and y >= 4 and y <= 6 then
             isPlaying = false
             play_song(math.max(1, currentIndex - 1))
             draw_songs()
-        elseif x >= 12 and x <= 18 and y == 16 then
+        elseif x >= 12 and x <= 18 and y >= 4 and y <= 6 then
             isPlaying = false
             play_song(math.min(#songs, currentIndex + 1))
             draw_songs()
-        elseif x >= 3 and x <= 9 and y == 20 then
+        elseif x >= 3 and x <= 9 and y >= 10 and y <= 12 then
             isPaused = not isPaused
-        elseif x >= 12 and x <= 18 and y == 20 then
+            if isPaused then
+                speaker.stop()
+            end
+        elseif x >= 12 and x <= 18 and y >= 10 and y <= 12 then
             isPaused = false
             isPlaying = true
             play_song(currentIndex)
         else
             for i = 1, #songs do
-                if y == i + 4 and x >= 2 and x <= 18 then
+                if y == i + 8 and x >= 2 and x <= 18 then
                     isPlaying = true
                     play_song(i)
                     return
@@ -146,7 +149,7 @@ local function handle_buttons()
 end
 
 local function draw_version()
-    monitor.setCursorPos(1, 26)
+    monitor.setCursorPos(1, 30)
     monitor.clearLine()
     monitor.setBackgroundColor(colors.black)
     monitor.setTextColor(colors.white)
