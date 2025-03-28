@@ -39,18 +39,11 @@ local function fetch_song_list()
     end
 end
 
-local function shuffle(tbl)
-    for i = #tbl, 2, -1 do
-        local j = math.random(i)
-        tbl[i], tbl[j] = tbl[j], tbl[i]
-    end
-end
-
 local function draw_songs()
     monitor.setBackgroundColor(colors.black)
     monitor.setTextColor(colors.white)
     for i, song in ipairs(songs) do
-        monitor.setCursorPos(2, i + 6)
+        monitor.setCursorPos(2, i + 4)
         if i == currentIndex then
             monitor.setBackgroundColor(colors.white)
             monitor.setTextColor(colors.black)
@@ -66,21 +59,20 @@ end
 local function draw_buttons()
     monitor.setBackgroundColor(colors.lightGray)
     monitor.setTextColor(colors.black)
-    monitor.setCursorPos(3, 14)
+    monitor.setCursorPos(3, 16)
     monitor.write("Prev")
     monitor.setBackgroundColor(colors.green)
     monitor.setTextColor(colors.white)
-    monitor.setCursorPos(12, 14)
+    monitor.setCursorPos(12, 16)
     monitor.write("Next")
     monitor.setBackgroundColor(colors.lightGray)
     monitor.setTextColor(colors.black)
-    monitor.setCursorPos(3, 18)
+    monitor.setCursorPos(3, 20)
     monitor.write("Pause")
     monitor.setBackgroundColor(colors.red)
     monitor.setTextColor(colors.white)
-    monitor.setCursorPos(12, 18)
+    monitor.setCursorPos(12, 20)
     monitor.write("Play")
-
     monitor.setBackgroundColor(colors.black)
     monitor.setTextColor(colors.white)
 end
@@ -127,23 +119,23 @@ end
 local function handle_buttons()
     while true do
         local event, side, x, y = os.pullEvent("monitor_touch")
-        if x >= 3 and x <= 9 and y == 14 then
+        if x >= 3 and x <= 9 and y == 16 then
             isPlaying = false
             play_song(math.max(1, currentIndex - 1))
             draw_songs()
-        elseif x >= 12 and x <= 18 and y == 14 then
+        elseif x >= 12 and x <= 18 and y == 16 then
             isPlaying = false
             play_song(math.min(#songs, currentIndex + 1))
             draw_songs()
-        elseif x >= 3 and x <= 9 and y == 18 then
+        elseif x >= 3 and x <= 9 and y == 20 then
             isPaused = not isPaused
-        elseif x >= 12 and x <= 18 and y == 18 then
+        elseif x >= 12 and x <= 18 and y == 20 then
             isPaused = false
             isPlaying = true
             play_song(currentIndex)
         else
             for i = 1, #songs do
-                if y == i + 6 and x >= 2 and x <= 18 then
+                if y == i + 4 and x >= 2 and x <= 18 then
                     isPlaying = true
                     play_song(i)
                     return
@@ -154,7 +146,7 @@ local function handle_buttons()
 end
 
 local function draw_version()
-    monitor.setCursorPos(1, 22)
+    monitor.setCursorPos(1, 26)
     monitor.clearLine()
     monitor.setBackgroundColor(colors.black)
     monitor.setTextColor(colors.white)
