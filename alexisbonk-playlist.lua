@@ -64,7 +64,7 @@ local function draw_buttons()
             monitor.setCursorPos(x, y + i)
             monitor.write(string.rep(" ", width))
         end
-        monitor.setCursorPos(x + (width - #text) // 2, y + height // 2)
+        monitor.setCursorPos(x + math.floor((width - #text) / 2), y + math.floor(height / 2))
         monitor.write(text)
     end
     
