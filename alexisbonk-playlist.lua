@@ -24,7 +24,7 @@ local isPlaying = false
 local isPaused = false
 local audioBuffer = nil
 
-local VERSION = "v1.4"
+local VERSION = "v1.5"
 
 local function fetch_song_list()
     local response = http.get(SONG_LIST_URL)
@@ -49,19 +49,19 @@ end
 local function draw_buttons()
     monitor.setBackgroundColor(colors.lightGray)
     monitor.setTextColor(colors.black)
-    monitor.setCursorPos(3, 6)
+    monitor.setCursorPos(3, 4)
     monitor.write("Prev")
     monitor.setBackgroundColor(colors.green)
     monitor.setTextColor(colors.white)
-    monitor.setCursorPos(12, 6)
+    monitor.setCursorPos(12, 4)
     monitor.write("Next")
     monitor.setBackgroundColor(colors.lightGray)
     monitor.setTextColor(colors.black)
-    monitor.setCursorPos(3, 9)
+    monitor.setCursorPos(3, 8)
     monitor.write("Pause")
     monitor.setBackgroundColor(colors.red)
     monitor.setTextColor(colors.white)
-    monitor.setCursorPos(12, 9)
+    monitor.setCursorPos(12, 8)
     monitor.write("Play")
 
     monitor.setBackgroundColor(colors.black)
@@ -72,7 +72,7 @@ local function draw_songs()
     monitor.setBackgroundColor(colors.black)
     monitor.setTextColor(colors.white)
     for i, song in ipairs(songs) do
-        monitor.setCursorPos(2, i + 10)
+        monitor.setCursorPos(2, i + 12)
         if i == currentIndex then
             monitor.setBackgroundColor(colors.white)
             monitor.setTextColor(colors.black)
@@ -85,19 +85,22 @@ local function draw_songs()
     end
 end
 
-local function update_song_display(songName)
+local function update_song_display()
     monitor.setCursorPos(2, 2)
     monitor.clearLine()
-    monitor.write("Now Playing: " .. songName)
+    if isPlaying then
+        local songName = songs[currentIndex]:match(".*/(.*)")
+        monitor.write("Now Playing: " .. songName)
+    end
 end
 
 local function play_song(index)
     if index < 1 or index > #songs then return end
     currentIndex = index
-    local url = songs[index]
-    local songName = url:match(".*/(.*)")
-    update_song_display(songName)
+    isPlaying = true
+    update_song_display()
 
+    local url = songs[index]
     local response = http.get(url, nil, true)
     if not response then return end
 
@@ -106,54 +109,39 @@ local function play_song(index)
     response.close()
 
     for i = 1, #data, 16 * 64 do
-        if isPaused then return end
+        if isPaused then
+            repeat os.pullEvent("monitor_touch") until not isPaused
+        end
         if not isPlaying then return end
         local buffer = decoder(data:sub(i, i + 16 * 64 - 1))
-        audioBuffer = buffer
         while not speaker.playAudio(buffer) do
             os.pullEvent("speaker_audio_empty")
         end
     end
-end
-
-local function play_shuffle()
-    fetch_song_list()
-    if #songs == 0 then return end
-    shuffle(songs)
-    while true do
-        if isPlaying then
-            play_song(currentIndex)
-            currentIndex = currentIndex + 1
-            if currentIndex > #songs then currentIndex = 1 end
-        end
-        os.pullEvent()
-    end
+    isPlaying = false
+    update_song_display()
 end
 
 local function handle_buttons()
     while true do
         local event, side, x, y = os.pullEvent("monitor_touch")
-        if x >= 3 and x <= 9 and y == 6 then
+        if x >= 3 and x <= 9 and y == 4 then
             isPlaying = false
             play_song(math.max(1, currentIndex - 1))
             draw_songs()
-        elseif x >= 12 and x <= 18 and y == 6 then
+        elseif x >= 12 and x <= 18 and y == 4 then
             isPlaying = false
             play_song(math.min(#songs, currentIndex + 1))
             draw_songs()
-        elseif x >= 3 and x <= 9 and y == 9 then
-            isPaused = true
-            isPlaying = false
-            if audioBuffer then
-                speaker.stopAudio()
-            end
-        elseif x >= 12 and x <= 18 and y == 9 then
+        elseif x >= 3 and x <= 9 and y == 8 then
+            isPaused = not isPaused
+        elseif x >= 12 and x <= 18 and y == 8 then
             isPaused = false
             isPlaying = true
             play_song(currentIndex)
         else
             for i = 1, #songs do
-                if y == i + 10 and x >= 2 and x <= 18 then
+                if y == i + 12 and x >= 2 and x <= 18 then
                     isPlaying = true
                     play_song(i)
                     return
@@ -164,7 +152,7 @@ local function handle_buttons()
 end
 
 local function draw_version()
-    monitor.setCursorPos(1, 18)  -- Position encore plus bas que les boutons
+    monitor.setCursorPos(1, 20)
     monitor.clearLine()
     monitor.setBackgroundColor(colors.black)
     monitor.setTextColor(colors.white)
@@ -176,4 +164,4 @@ fetch_song_list()
 draw_buttons()
 draw_songs()
 draw_version()
-parallel.waitForAny(play_shuffle, handle_buttons)
+parallel.waitForAny(handle_buttons)
