@@ -16,7 +16,7 @@ monitor.setTextScale(1)
 monitor.clear()
 monitor.setCursorPos(1, 1)
 monitor.setTextColor(colors.red)
-monitor.write("⚠️ Une chanson joue jusqu'à la fin.")
+monitor.write("/!\\ A song will play until the end before any action.")
 
 local GITHUB_RAW_URL = "https://github.com/alexisbonk/songs/raw/refs/heads/main/"
 local SONG_LIST_URL = "https://api.github.com/repos/alexisbonk/songs/contents/"
@@ -27,7 +27,7 @@ local isPlaying = false
 local isPaused = false
 local audioBuffer = nil
 
-local VERSION = 1.9
+local VERSION = 2.0
 
 local function fetch_song_list()
     local response = http.get(SONG_LIST_URL)
@@ -189,7 +189,7 @@ end
 monitor.clear()
 monitor.setCursorPos(1, 1)
 monitor.setTextColor(colors.red)
-monitor.write("⚠️ Une chanson joue jusqu'à la fin.")
+monitor.write("/!\\ A song will play until the end before any action.")
 fetch_song_list()
 draw_songs()
 draw_buttons()
